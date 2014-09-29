@@ -39,7 +39,7 @@
     <Capability Name="internetClient" />
     <m2:DeviceCapability Name="bluetooth.genericAttributeProfile">
       <m2:Device Id="any">
-        <m2:Function Type="serviceId:0001"/>
+        <m2:Function Type="name:genericAccess"/>
       </m2:Device>
     </m2:DeviceCapability>
   </Capabilities>

@@ -1,93 +1,192 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Collections.ObjectModel;
+using System.IO;
 using System.Threading.Tasks;
+using System.Xml;
+using Windows.ApplicationModel;
+using Windows.Devices.Bluetooth;
 using Windows.Devices.Bluetooth.GenericAttributeProfile;
 using Windows.Devices.Enumeration;
-using Windows.Devices.Enumeration.Pnp;
+using Windows.Storage;
+using Windows.Storage.Streams;
 
 namespace kshoji.BleMidi
 {
+    /// <summary>
+    /// Utility class for BLE MIDI Device detection
+    /// </summary>
     public class BleMidiDeviceUtils
     {
-        // TODO move to Resource file
-        static readonly Guid serviceUuid = BleUuidUtils.FromString("0001");
-        static readonly Guid inputCharacteristicUuid = BleUuidUtils.FromString("0002");
-        static readonly Guid outputCharacteristicUuid = BleUuidUtils.FromString("0003");
+        private static readonly List<Guid> serviceUuids = new List<Guid>();
+        private static readonly List<Guid> inputCharacteristicUuids = new List<Guid>();
+        private static readonly List<Guid> outputCharacteristicUuids = new List<Guid>();
 
-        // usage:
-        // DeviceInformationCollection devices = await DeviceInformation.FindAllAsync(GattDeviceService.GetDeviceSelectorFromShortId(0x0001));
-        /// <summary>
-        /// Obtains GattDeviceService instance for MIDI
-        /// </summary>
-        /// <returns>GattDeviceService</returns>
-        public static async Task<GattDeviceService> GetMidiService()
+        static BleMidiDeviceUtils()
         {
-            // FIXME only first one will be processed.
-            var devices = await DeviceInformation.FindAllAsync(GattDeviceService.GetDeviceSelectorFromShortId(0x0001));
-            if (devices.Count > 0)
+            Initialize();
+        }
+
+        /// <summary>
+        /// Initialize Guid lists
+        /// </summary>
+        private static async void Initialize()
+        {
+            var xml = await Package.Current.InstalledLocation.GetFileAsync(@"BLE MIDI\Contents\uuids.xml");
+            string text = await FileIO.ReadTextAsync(xml, Windows.Storage.Streams.UnicodeEncoding.Utf8);
+            string currentElementName = null;
+            using (XmlReader reader = XmlReader.Create(new StringReader(text)))
             {
-                foreach (var device in devices)
+                while (reader.Read())
                 {
-                    GattDeviceService service = await GattDeviceService.FromIdAsync(device.Id);
-                    if (BleUuidUtils.Matches(service.Uuid, serviceUuid))
+                    switch (reader.NodeType)
                     {
-                        return service;
+                        case XmlNodeType.Element:
+                            if (reader.Name.Equals("string-array"))
+                            {
+                                currentElementName = reader.GetAttribute("name");
+                            }
+                            break;
+
+                        case XmlNodeType.Text:
+                            switch (currentElementName)
+                            {
+                                case "uuidListForService":
+                                    serviceUuids.Add(BleUuidUtils.FromString(reader.Value));
+                                    break;
+                                case "uuidListForInputCharacteristic":
+                                    inputCharacteristicUuids.Add(BleUuidUtils.FromString(reader.Value));
+                                    break;
+                                case "uuidListForOutputCharacteristic":
+                                    outputCharacteristicUuids.Add(BleUuidUtils.FromString(reader.Value));
+                                    break;
+                                default:
+                                    break;
+                            }
+                            break;
+
+                        default:
+                            break;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Obtains list of GattDeviceService for MIDI
+        /// </summary>
+        /// <returns>List of GattDeviceService</returns>
+        public static async Task<IReadOnlyList<GattDeviceService>> GetMidiServices()
+        {
+            List<GattDeviceService> result = new List<GattDeviceService>();
+
+            foreach (var serviceUuid in serviceUuids)
+            {
+                var devices = await DeviceInformation.FindAllAsync(GattDeviceService.GetDeviceSelectorFromUuid(GattServiceUuids.GenericAccess));
+                if (devices.Count > 0)
+                {
+                    foreach (var device in devices)
+                    {
+                        GattDeviceService service = await GattDeviceService.FromIdAsync(device.Id);
+                        if (service != null)
+                        {
+                            result.Add(service);
+                        }
                     }
                 }
             }
 
-            // not found.
-            return null;
+            return new ReadOnlyCollection<GattDeviceService>(result);
         }
 
         /// <summary>
-        /// Obtains BluetoothGattCharacteristic for MIDI Input
+        /// Obtains list of BluetoothGattCharacteristic for MIDI Input
         /// </summary>
         /// <param name="gattDeviceService"></param>
-        /// <returns>null if no characteristic found</returns>
+        /// <returns>list of the GattCharacteristic, empty list if no characteristic found</returns>
         public static IReadOnlyList<GattCharacteristic> GetMidiInputCharacteristics(GattDeviceService gattDeviceService)
         {
             List<GattCharacteristic> result = new List<GattCharacteristic>();
 
-            IReadOnlyList<GattCharacteristic> characteristics = gattDeviceService.GetCharacteristics(GattDeviceService.ConvertShortIdToUuid(0x0002));
-            foreach (var characteristic in characteristics)
+            foreach (var inputCharacteristic in inputCharacteristicUuids)
             {
-                if (BleUuidUtils.Matches(characteristic.Uuid, inputCharacteristicUuid))
+                Guid convertedCharacteristic = inputCharacteristic;
+                if (BleUuidUtils.IsShortGuid(convertedCharacteristic))
+                {
+                    convertedCharacteristic = GattDeviceService.ConvertShortIdToUuid(BleUuidUtils.GetShortUuid(inputCharacteristic));
+                }
+
+                IReadOnlyList<GattCharacteristic> characteristics = gattDeviceService.GetCharacteristics(convertedCharacteristic);
+                foreach (var characteristic in characteristics)
                 {
                     result.Add(characteristic);
                 }
             }
 
-            return result;
+            return new ReadOnlyCollection<GattCharacteristic>(result);
         }
 
         /// <summary>
-        /// Obtains BluetoothGattCharacteristic for MIDI Output
+        /// Obtains list of BluetoothGattCharacteristic for MIDI Output
         /// </summary>
         /// <param name="gattDeviceService"></param>
-        /// <returns>null if no characteristic found</returns>
+        /// <returns>list of the GattCharacteristic, empty list if no characteristic found</returns>
         public static IReadOnlyList<GattCharacteristic> GetMidiOutputCharacteristics(GattDeviceService gattDeviceService)
         {
             List<GattCharacteristic> result = new List<GattCharacteristic>();
 
-            IReadOnlyList<GattCharacteristic> characteristics = gattDeviceService.GetCharacteristics(GattDeviceService.ConvertShortIdToUuid(0x0003));
-            foreach (var characteristic in characteristics)
+            foreach (var outputCharacteristic in outputCharacteristicUuids)
             {
-                if (BleUuidUtils.Matches(characteristic.Uuid, outputCharacteristicUuid))
+                Guid convertedCharacteristic = outputCharacteristic;
+                if (BleUuidUtils.IsShortGuid(convertedCharacteristic))
+                {
+                    convertedCharacteristic = GattDeviceService.ConvertShortIdToUuid(BleUuidUtils.GetShortUuid(outputCharacteristic));
+                }
+
+                IReadOnlyList<GattCharacteristic> characteristics = gattDeviceService.GetCharacteristics(convertedCharacteristic);
+                foreach (var characteristic in characteristics)
                 {
                     result.Add(characteristic);
                 }
             }
 
-            return result;
+            return new ReadOnlyCollection<GattCharacteristic>(result);
+        }
+
+        /// <summary>
+        /// Obtains BLE device name
+        /// </summary>
+        /// <param name="service">GattDeviceService</param>
+        /// <returns>device name, null if fails</returns>
+        public static async Task<string> GetBleDeviceName(GattDeviceService service)
+        {
+            // FIXME this method doesn't return any string.
+
+            IReadOnlyList<GattCharacteristic> characteristics = service.GetCharacteristics(GattDescriptor.ConvertShortIdToUuid(0x2a00));
+            System.Diagnostics.Debug.WriteLine("characteristic count:" + characteristics.Count);
+            foreach (var characteristic in characteristics)
+            {
+                var read = await characteristic.ReadValueAsync(BluetoothCacheMode.Uncached);
+                if (read.Status == GattCommunicationStatus.Success)
+                {
+                    var buffer = read.Value;
+
+                    using (DataReader dataReader = DataReader.FromBuffer(buffer))
+                    {
+                        System.Diagnostics.Debug.WriteLine("buffer length:" + buffer.Length);
+                        byte[] bytes = new byte[buffer.Length];
+                        dataReader.ReadBytes(bytes);
+                        return System.Convert.ToString(bytes);
+                    }
+                }
+            }
+
+            return null;
         }
     }
 
     /// <summary>
     /// Utility class for BLE UUID
-    /// TODO consider to use GattDescriptor.ConvertShortIdToUuid
     /// </summary>
     public class BleUuidUtils
     {
@@ -96,6 +195,7 @@ namespace kshoji.BleMidi
         /// </summary>
         /// <param name="uuidString">the Guid string to parse</param>
         /// <returns>Guid instance</returns>
+        /// <exception cref="FormatException">if argument is invalid format</exception>
         public static Guid FromString(string uuidString)
         {
             try
@@ -105,7 +205,7 @@ namespace kshoji.BleMidi
             catch (FormatException)
             {
                 // may be a short style
-                return Guid.Parse("0000" + uuidString + "-0000-0000-0000-000000000000");
+                return GattDescriptor.ConvertShortIdToUuid(ushort.Parse(uuidString));
             }
         }
 
@@ -141,7 +241,7 @@ namespace kshoji.BleMidi
         /// </summary>
         /// <param name="src"></param>
         /// <returns></returns>
-        private static ushort GetShortUuid(Guid src)
+        public static ushort GetShortUuid(Guid src)
         {
             ushort result = 0;
             byte[] uuid = src.ToByteArray();
@@ -157,7 +257,7 @@ namespace kshoji.BleMidi
         /// </summary>
         /// <param name="src"></param>
         /// <returns></returns>
-        private static bool IsShortGuid(Guid src)
+        public static bool IsShortGuid(Guid src)
         {
             byte[] uuid = src.ToByteArray();
             int otherbits = 0;

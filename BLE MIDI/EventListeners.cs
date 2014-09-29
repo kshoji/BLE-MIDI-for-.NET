@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace kshoji.BleMidi
+﻿namespace kshoji.BleMidi
 {
     /// <summary>
-    /// Listener for MIDI events
+    /// Event listener for MIDI events
     /// </summary>
     public sealed class OnMidiInputEventListener
     {
@@ -42,7 +36,6 @@ namespace kshoji.BleMidi
                 NoteOff(sender, channel, note, velocity);
             }
         }
-
 
         /// <summary>
         /// Note-on
@@ -164,12 +157,12 @@ namespace kshoji.BleMidi
         /// <param name="sender">the device sent this message</param>
         /// <param name="song">0-127</param>
         public delegate void SongSelectDelegate(MidiInputDevice sender, int song);
-        public event SongSelectDelegate MidiSongSelect;
+        public event SongSelectDelegate SongSelect;
         public void OnMidiSongSelect(MidiInputDevice sender, int song)
         {
-            if (MidiSongSelect != null)
+            if (SongSelect != null)
             {
-                MidiSongSelect(sender, song);
+                SongSelect(sender, song);
             }
         }
 
@@ -326,36 +319,68 @@ namespace kshoji.BleMidi
     /// <summary>
     /// Listener for MIDI attached events
     /// </summary>
-    public interface OnMidiDeviceAttatchedListener
+    public sealed class OnMidiDeviceAttachedListener
     {
         /// <summary>
         /// MIDI input device has been attached
         /// </summary>
         /// <param name="midiInputDevice"></param>
-        void OnMidiInputDeviceAttached(MidiInputDevice midiInputDevice);
+        public delegate void MidiInputDeviceAttachedDelegate(MidiInputDevice midiInputDevice);
+        public event MidiInputDeviceAttachedDelegate MidiInputDeviceAttached;
+        public void OnMidiInputDeviceAttached(MidiInputDevice midiInputDevice)
+        {
+            if (MidiInputDeviceAttached != null)
+            {
+                MidiInputDeviceAttached(midiInputDevice);
+            }
+        }
 
         /// <summary>
         /// MIDI output device has been attached
         /// </summary>
         /// <param name="midiOutputDevice"></param>
-        void OnMidiOutputDeviceAttached(MidiOutputDevice midiOutputDevice);
+        public delegate void MidiOutputDeviceAttachedDelegate(MidiOutputDevice midiOutputDevice);
+        public event MidiOutputDeviceAttachedDelegate MidiOutputDeviceAttached;
+        public void OnMidiOutputDeviceAttached(MidiOutputDevice midiOutputDevice)
+        {
+            if (MidiOutputDeviceAttached != null)
+            {
+                MidiOutputDeviceAttached(midiOutputDevice);
+            }
+        }
     }
 
     /// <summary>
     /// Listener for MIDI detached events
     /// </summary>
-    public interface OnMidiDeviceDetchedListener
+    public sealed class OnMidiDeviceDetachedListener
     {
         /// <summary>
         /// MIDI input device has been detached
         /// </summary>
         /// <param name="midiInputDevice"></param>
-        void OnMidiInputDeviceDetached(MidiInputDevice midiInputDevice);
+        public delegate void MidiInputDeviceDetachedDelegate(MidiInputDevice midiInputDevice);
+        public event MidiInputDeviceDetachedDelegate MidiInputDeviceDetached;
+        public void OnMidiInputDeviceDetached(MidiInputDevice midiInputDevice)
+        {
+            if (MidiInputDeviceDetached != null)
+            {
+                MidiInputDeviceDetached(midiInputDevice);
+            }
+        }
 
         /// <summary>
         /// MIDI output device has been detached
         /// </summary>
         /// <param name="midiOutputDevice"></param>
-        void OnMidiOutputDeviceDetached(MidiOutputDevice midiOutputDevice);
+        public delegate void MidiOutputDeviceDetachedDelegate(MidiOutputDevice midiOutputDevice);
+        public event MidiOutputDeviceDetachedDelegate MidiOutputDeviceDetached;
+        public void OnMidiOutputDeviceDetached(MidiOutputDevice midiOutputDevice)
+        {
+            if (MidiOutputDeviceDetached != null)
+            {
+                MidiOutputDeviceDetached(midiOutputDevice);
+            }
+        }
     }
 }

@@ -1,19 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
+﻿using kshoji.BleMidi;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Controls.Primitives;
-using Windows.UI.Xaml.Data;
-using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Media;
-using Windows.UI.Xaml.Navigation;
-
-using kshoji.BleMidi;
+using System;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=234238
 
@@ -24,6 +12,8 @@ namespace Sample_App
     /// </summary>
     public sealed partial class MainPage : Page
     {
+        private BleMidilCentralProvider bleMidiCentralProvider = new BleMidilCentralProvider();
+
         public MainPage()
         {
             this.InitializeComponent();
@@ -31,7 +21,37 @@ namespace Sample_App
 
         private async void SyncButtonClicked(object sender, RoutedEventArgs e)
         {
-            await new BleMidilCentralProvider().listupDevices();
+            bleMidiCentralProvider.GetMidiDeviceAttachedListener().MidiInputDeviceAttached += MainPage_MidiInputDeviceAttached;
+            bleMidiCentralProvider.GetMidiDeviceAttachedListener().MidiOutputDeviceAttached += MainPage_MidiOutputDeviceAttached;
+            bleMidiCentralProvider.GetMidiDeviceDetachedListener().MidiOutputDeviceDetached += MainPage_MidiOutputDeviceDetached;
+
+            await bleMidiCentralProvider.ScanDevices();
+        }
+
+        void MainPage_MidiInputDeviceAttached(MidiInputDevice midiInputDevice)
+        {
+            midiInputDevice.GetEventListener().NoteOn += MainPage_NoteOn;
+            midiInputDevice.GetEventListener().NoteOff += MainPage_NoteOff;
+        }
+
+        void MainPage_NoteOff(MidiInputDevice sender, int channel, int note, int velocity)
+        {
+            MidiInputListView.Items.Add("Note Off");
+        }
+
+        void MainPage_NoteOn(MidiInputDevice sender, int channel, int note, int velocity)
+        {
+            MidiInputListView.Items.Add("Note On");
+        }
+
+        void MainPage_MidiOutputDeviceAttached(MidiOutputDevice midiOutputDevice)
+        {
+            DevicesComboBox.Items.Add(midiOutputDevice);
+        }
+
+        void MainPage_MidiOutputDeviceDetached(MidiOutputDevice midiOutputDevice)
+        {
+            DevicesComboBox.Items.Remove(midiOutputDevice);
         }
     }
 }

@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<uuids>
+  <!-- Characteristics UUID for MIDI Input -->
+  <!-- Notify -->
+  <string-array name="uuidListForInputCharacteristic">
+    <item>0002</item>
+    <!-- RedBearLab Biscuit RX -->
+    <item>713d0002-503e-4c75-ba94-3148f18d941e</item>
+  </string-array>
+
+  <!-- Characteristics UUID for MIDI Output -->
+  <!-- Write without Response -->
+  <string-array name="uuidListForOutputCharacteristic">
+    <item>0003</item>
+    <!-- RedBearLab Biscuit TX -->
+    <item>713d0003-503e-4c75-ba94-3148f18d941e</item>
+  </string-array>
+</uuids>
