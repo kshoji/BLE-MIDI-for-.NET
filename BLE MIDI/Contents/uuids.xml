@@ -1,5 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <uuids>
+  <!-- Advertise and Services UUID for MIDI -->
+  <string-array name="uuidListForService">
+    <item>0001</item>
+  </string-array>
+
   <!-- Characteristics UUID for MIDI Input -->
   <!-- Notify -->
   <string-array name="uuidListForInputCharacteristic">

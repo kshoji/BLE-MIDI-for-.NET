@@ -76,13 +76,23 @@ namespace kshoji.BleMidi
         /// Obtains list of GattDeviceService for MIDI
         /// </summary>
         /// <returns>List of GattDeviceService</returns>
-        public static async Task<IReadOnlyList<GattDeviceService>> GetMidiServices()
+        public static async Task<IReadOnlyDictionary<GattDeviceService, DeviceInformation>> GetMidiServices()
         {
-            List<GattDeviceService> result = new List<GattDeviceService>();
+            Dictionary<GattDeviceService, DeviceInformation> result = new Dictionary<GattDeviceService, DeviceInformation>();
 
             foreach (var serviceUuid in serviceUuids)
             {
-                var devices = await DeviceInformation.FindAllAsync(GattDeviceService.GetDeviceSelectorFromUuid(GattServiceUuids.GenericAccess));
+                string deviceSelector;
+                if (BleUuidUtils.IsShortGuid(serviceUuid))
+                {
+                    deviceSelector = GattDeviceService.GetDeviceSelectorFromShortId(BleUuidUtils.GetShortUuid(serviceUuid));
+                }
+                else
+                {
+                    deviceSelector = GattDeviceService.GetDeviceSelectorFromUuid(serviceUuid);
+                }
+
+                var devices = await DeviceInformation.FindAllAsync(deviceSelector);
                 if (devices.Count > 0)
                 {
                     foreach (var device in devices)
@@ -90,13 +100,13 @@ namespace kshoji.BleMidi
                         GattDeviceService service = await GattDeviceService.FromIdAsync(device.Id);
                         if (service != null)
                         {
-                            result.Add(service);
+                            result.Add(service, device);
                         }
                     }
                 }
             }
 
-            return new ReadOnlyCollection<GattDeviceService>(result);
+            return new ReadOnlyDictionary<GattDeviceService, DeviceInformation>(result);
         }
 
         /// <summary>
@@ -151,37 +161,6 @@ namespace kshoji.BleMidi
             }
 
             return new ReadOnlyCollection<GattCharacteristic>(result);
-        }
-
-        /// <summary>
-        /// Obtains BLE device name
-        /// </summary>
-        /// <param name="service">GattDeviceService</param>
-        /// <returns>device name, null if fails</returns>
-        public static async Task<string> GetBleDeviceName(GattDeviceService service)
-        {
-            // FIXME this method doesn't return any string.
-
-            IReadOnlyList<GattCharacteristic> characteristics = service.GetCharacteristics(GattDescriptor.ConvertShortIdToUuid(0x2a00));
-            System.Diagnostics.Debug.WriteLine("characteristic count:" + characteristics.Count);
-            foreach (var characteristic in characteristics)
-            {
-                var read = await characteristic.ReadValueAsync(BluetoothCacheMode.Uncached);
-                if (read.Status == GattCommunicationStatus.Success)
-                {
-                    var buffer = read.Value;
-
-                    using (DataReader dataReader = DataReader.FromBuffer(buffer))
-                    {
-                        System.Diagnostics.Debug.WriteLine("buffer length:" + buffer.Length);
-                        byte[] bytes = new byte[buffer.Length];
-                        dataReader.ReadBytes(bytes);
-                        return System.Convert.ToString(bytes);
-                    }
-                }
-            }
-
-            return null;
         }
     }
 

@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using Windows.Devices.Bluetooth.GenericAttributeProfile;
 using Windows.Storage.Streams;
+using Windows.Devices.Enumeration;
 
 namespace kshoji.BleMidi
 {
@@ -12,16 +13,16 @@ namespace kshoji.BleMidi
     /// </summary>
     public partial class MidiInputDevice
     {
-        private GattCharacteristic midiInputCharacteristic;
-        private readonly MidiParser midiParser;
+        private readonly GattCharacteristic midiInputCharacteristic;
+        private readonly DeviceInformation deviceInformation;
 
         /// <summary>
         /// Private constructor
         /// </summary>
-        private MidiInputDevice(GattCharacteristic characteristic)
+        private MidiInputDevice(GattCharacteristic characteristic, DeviceInformation deviceInformation)
         {
-            midiParser = new MidiParser(this);
             midiInputCharacteristic = characteristic;
+            this.deviceInformation = deviceInformation;
             midiInputCharacteristic.ValueChanged += OnCharacteristicValueChanged;
         }
 
@@ -33,7 +34,7 @@ namespace kshoji.BleMidi
         {
             var result = new List<MidiInputDevice>();
 
-            IReadOnlyList<GattDeviceService> midiServices = await BleMidiDeviceUtils.GetMidiServices();
+            IReadOnlyDictionary<GattDeviceService, DeviceInformation> midiServices = await BleMidiDeviceUtils.GetMidiServices();
             if (midiServices == null || midiServices.Count < 1)
             {
                 return new ReadOnlyCollection<MidiInputDevice>(result);
@@ -41,7 +42,7 @@ namespace kshoji.BleMidi
 
             foreach (var midiService in midiServices)
             {
-                var midiInputCharacteristics = BleMidiDeviceUtils.GetMidiInputCharacteristics(midiService);
+                var midiInputCharacteristics = BleMidiDeviceUtils.GetMidiInputCharacteristics(midiService.Key);
                 if (midiInputCharacteristics == null)
                 {
                     continue;
@@ -51,10 +52,16 @@ namespace kshoji.BleMidi
                 {
                     if (characteristic.CharacteristicProperties.HasFlag(GattCharacteristicProperties.Notify))
                     {
-                        await characteristic.WriteClientCharacteristicConfigurationDescriptorAsync(GattClientCharacteristicConfigurationDescriptorValue.Notify);
+                        while (true)
+                        {
+                            GattCommunicationStatus status = await characteristic.WriteClientCharacteristicConfigurationDescriptorAsync(GattClientCharacteristicConfigurationDescriptorValue.Notify);
+                            if (status == GattCommunicationStatus.Success)
+                            {
+                                break;
+                            }
+                        }
                     }
-                    System.Diagnostics.Debug.WriteLine("service id:" + (await BleMidiDeviceUtils.GetBleDeviceName(midiService)));
-                    result.Add(new MidiInputDevice(characteristic));
+                    result.Add(new MidiInputDevice(characteristic, midiService.Value));
                 }
             }
 
@@ -70,16 +77,16 @@ namespace kshoji.BleMidi
         {
             var data = new byte[args.CharacteristicValue.Length];
             DataReader.FromBuffer(args.CharacteristicValue).ReadBytes(data);
-            midiParser.parse(data);
+            parse(data);
         }
 
         /// <summary>
-        /// Obtains an event litener for the MIDI events
+        /// Obtains the device information
         /// </summary>
-        /// <param name="midiInputEventListener"></param>
-        public OnMidiInputEventListener GetEventListener()
+        /// <returns></returns>
+        public DeviceInformation GetDeviceInformation()
         {
-            return midiParser.GetMidiInputEventListener();
+            return deviceInformation;
         }
     }
 
@@ -88,14 +95,16 @@ namespace kshoji.BleMidi
     /// </summary>
     public partial class MidiOutputDevice
     {
-        private GattCharacteristic midiOutputCharacteristic;
+        private readonly GattCharacteristic midiOutputCharacteristic;
+        private readonly DeviceInformation deviceInformation;
 
         /// <summary>
         /// Private constructor
         /// </summary>
-        private MidiOutputDevice(GattCharacteristic characteristic)
+        private MidiOutputDevice(GattCharacteristic characteristic, DeviceInformation deviceInformation)
         {
             midiOutputCharacteristic = characteristic;
+            this.deviceInformation = deviceInformation;
         }
 
         /// <summary>
@@ -106,7 +115,7 @@ namespace kshoji.BleMidi
         {
             var result = new List<MidiOutputDevice>();
 
-            IReadOnlyList<GattDeviceService> midiServices = await BleMidiDeviceUtils.GetMidiServices();
+            IReadOnlyDictionary<GattDeviceService, DeviceInformation> midiServices = await BleMidiDeviceUtils.GetMidiServices();
             if (midiServices == null || midiServices.Count < 1)
             {
                 return new ReadOnlyCollection<MidiOutputDevice>(result);
@@ -114,7 +123,7 @@ namespace kshoji.BleMidi
 
             foreach (var midiService in midiServices)
             {
-                var midiOutputCharacteristics = BleMidiDeviceUtils.GetMidiOutputCharacteristics(midiService);
+                var midiOutputCharacteristics = BleMidiDeviceUtils.GetMidiOutputCharacteristics(midiService.Key);
                 if (midiOutputCharacteristics == null)
                 {
                     continue;
@@ -127,7 +136,7 @@ namespace kshoji.BleMidi
                         await characteristic.WriteClientCharacteristicConfigurationDescriptorAsync(GattClientCharacteristicConfigurationDescriptorValue.Notify);
                     }
 
-                    result.Add(new MidiOutputDevice(characteristic));
+                    result.Add(new MidiOutputDevice(characteristic, midiService.Value));
                 }
             }
 
@@ -135,26 +144,11 @@ namespace kshoji.BleMidi
         }
 
         /// <summary>
-        /// Destructor
+        /// Obtains the device information
         /// </summary>
-        ~MidiOutputDevice()
-        {
-            // Do nothing
+        /// <returns></returns>
+        public DeviceInformation GetDeviceInformation() {
+            return deviceInformation;
         }
-
-        /**
-         * Obtains the device name
-         *
-         * @return device name + ".output"
-         */
-        public String GetDeviceName() {
-            return midiOutputCharacteristic.UserDescription + ".output";
-        }
-
-        //        public String toString() {
-        //            return getDeviceName();
-        //        }
-
-
     }
 }

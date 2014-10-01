@@ -37,7 +37,7 @@
     <Compile Include="BleDeviceUtils.cs" />
     <Compile Include="BleMidilCentralProvider.cs" />
     <Compile Include="BleMidiDevices.cs" />
-    <Compile Include="EventListeners.cs" />
+    <Compile Include="EventHandlers.cs" />
     <Compile Include="MidiParser.cs" />
     <Compile Include="MidiSender.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

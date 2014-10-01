@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -6,14 +7,12 @@ using System.Threading.Tasks;
 namespace kshoji.BleMidi
 {
     /// <summary>
-    /// Class for obtaining BLE MIDI devices
+    /// Class for using BLE MIDI devices
     /// </summary>
-    public class BleMidilCentralProvider
+    public sealed partial class BleMidilCentralProvider
     {
         private List<MidiInputDevice> midiInputDevices = new List<MidiInputDevice>();
         private List<MidiOutputDevice> midiOutputDevices = new List<MidiOutputDevice>();
-        private readonly OnMidiDeviceAttachedListener onMidiDeviceAttachedListener = new OnMidiDeviceAttachedListener();
-        private readonly OnMidiDeviceDetachedListener onMidiDeviceDetachedListener = new OnMidiDeviceDetachedListener();
 
         /// <summary>
         /// Check for the device connection change
@@ -21,45 +20,53 @@ namespace kshoji.BleMidi
         /// <returns></returns>
         public async Task ScanDevices()
         {
+            // check for attached
             var midiInputDevices = await MidiInputDevice.GetInstances();
-            // check for attached
-            foreach (var midiInputDevice in midiInputDevices)
+            var attachedMidiInputDevices = Array.FindAll<MidiInputDevice>(midiInputDevices.ToArray<MidiInputDevice>(), midiInputDevice => !this.midiInputDevices.Contains(midiInputDevice));
+            foreach (var midiInputDevice in attachedMidiInputDevices)
             {
-                if (!this.midiInputDevices.Contains(midiInputDevice))
+                if (MidiInputDeviceAttached != null)
                 {
-                    this.midiInputDevices.Add(midiInputDevice);
-                    onMidiDeviceAttachedListener.OnMidiInputDeviceAttached(midiInputDevice);
+                    MidiInputDeviceAttached(midiInputDevice);
                 }
             }
-            // check for detached
-            foreach (var midiInputDevice in this.midiInputDevices)
-            {
-                if (!midiInputDevices.Contains(midiInputDevice))
-                {
-                    onMidiDeviceDetachedListener.OnMidiInputDeviceDetached(midiInputDevice);
-                    this.midiInputDevices.Remove(midiInputDevice);
-                }
-            }
+            this.midiInputDevices.AddRange(attachedMidiInputDevices);
 
-            var midiOutputDevices = await MidiOutputDevice.GetInstances();
-            // check for attached
-            foreach (var midiOutputDevice in midiOutputDevices)
-            {
-                if (!this.midiOutputDevices.Contains(midiOutputDevice))
-                {
-                    this.midiOutputDevices.Add(midiOutputDevice);
-                    onMidiDeviceAttachedListener.OnMidiOutputDeviceAttached(midiOutputDevice);
-                }
-            }
             // check for detached
-            foreach (var midiOutputDevice in this.midiOutputDevices)
+            Predicate<MidiInputDevice> detachedMidiInputDevicePredicate = midiInputDevice => !midiInputDevices.Contains(midiInputDevice);
+            var detachedMidiInputDevices = Array.FindAll<MidiInputDevice>(this.midiInputDevices.ToArray<MidiInputDevice>(), detachedMidiInputDevicePredicate);
+            foreach (var midiInputDevice in detachedMidiInputDevices)
             {
-                if (!midiOutputDevices.Contains(midiOutputDevice))
+                if (MidiInputDeviceDetached != null)
                 {
-                    onMidiDeviceDetachedListener.OnMidiOutputDeviceDetached(midiOutputDevice);
-                    this.midiOutputDevices.Remove(midiOutputDevice);
+                    MidiInputDeviceDetached(midiInputDevice);
                 }
             }
+            this.midiInputDevices.RemoveAll(detachedMidiInputDevicePredicate);
+
+            // check for attached
+            var midiOutputDevices = await MidiOutputDevice.GetInstances();
+            var attachedMidiOutputDevices = Array.FindAll<MidiOutputDevice>(midiOutputDevices.ToArray<MidiOutputDevice>(), midiOutputDevice => !this.midiOutputDevices.Contains(midiOutputDevice));
+            foreach (var midiOutputDevice in attachedMidiOutputDevices)
+            {
+                if (MidiOutputDeviceAttached != null)
+                {
+                    MidiOutputDeviceAttached(midiOutputDevice);
+                }
+            }
+            this.midiOutputDevices.AddRange(attachedMidiOutputDevices);
+
+            // check for detached
+            Predicate<MidiOutputDevice> detachedMidiOutputDevicePredicate = midiOutputDevice => !midiOutputDevices.Contains(midiOutputDevice);
+            var detachedMidiOutputDevices = Array.FindAll<MidiOutputDevice>(this.midiOutputDevices.ToArray<MidiOutputDevice>(), detachedMidiOutputDevicePredicate);
+            foreach (var midiOutputDevice in detachedMidiOutputDevices)
+            {
+                if (MidiOutputDeviceDetached != null)
+                {
+                    MidiOutputDeviceDetached(midiOutputDevice);
+                }
+            }
+            this.midiOutputDevices.RemoveAll(detachedMidiOutputDevicePredicate);
         }
 
         /// <summary>
@@ -78,24 +85,6 @@ namespace kshoji.BleMidi
         public IReadOnlyList<MidiOutputDevice> GetMidiOutputDevices()
         {
             return new ReadOnlyCollection<MidiOutputDevice>(midiOutputDevices);
-        }
-
-        /// <summary>
-        /// Obtains OnMidiDeviceAttachedListener instance to apply the event handler
-        /// </summary>
-        /// <returns></returns>
-        public OnMidiDeviceAttachedListener GetMidiDeviceAttachedListener()
-        {
-            return onMidiDeviceAttachedListener;
-        }
-
-        /// <summary>
-        /// Obtains OnMidiDeviceDetachedListener instance to apply the event handler
-        /// </summary>
-        /// <returns></returns>
-        public OnMidiDeviceDetachedListener GetMidiDeviceDetachedListener()
-        {
-            return onMidiDeviceDetachedListener;
         }
     }
 }

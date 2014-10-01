@@ -3,7 +3,7 @@
     /// <summary>
     /// Event listener for MIDI events
     /// </summary>
-    public sealed class OnMidiInputEventListener
+    public partial class MidiInputDevice
     {
         /// <summary>
         /// SysEx
@@ -12,13 +12,6 @@
         /// <param name="systemExclusive">received message</param>
         public delegate void SystemExclusiveDelegate(MidiInputDevice sender, byte[] systemExclusive);
         public event SystemExclusiveDelegate SystemExclusive;
-        public void OnMidiSystemExclusive(MidiInputDevice sender, byte[] systemExclusive)
-        {
-            if (SystemExclusive != null)
-            {
-                SystemExclusive(sender, systemExclusive);
-            }
-        }
 
         /// <summary>
         /// Note-off
@@ -29,13 +22,6 @@
         /// <param name="velocity">0-127</param>
         public delegate void NoteOffDelegate(MidiInputDevice sender, int channel, int note, int velocity);
         public event NoteOffDelegate NoteOff;
-        public void OnMidiNoteOff(MidiInputDevice sender, int channel, int note, int velocity)
-        {
-            if (NoteOff != null)
-            {
-                NoteOff(sender, channel, note, velocity);
-            }
-        }
 
         /// <summary>
         /// Note-on
@@ -46,13 +32,6 @@
         /// <param name="velocity">0-127</param>
         public delegate void NoteOnDelegate(MidiInputDevice sender, int channel, int note, int velocity);
         public event NoteOnDelegate NoteOn;
-        public void OnMidiNoteOn(MidiInputDevice sender, int channel, int note, int velocity)
-        {
-            if (NoteOn != null)
-            {
-                NoteOn(sender, channel, note, velocity);
-            }
-        }
 
         /// <summary>
         /// Poly-KeyPress
@@ -63,13 +42,6 @@
         /// <param name="pressure">0-127</param>
         public delegate void PolyphonicAftertouchDelegate(MidiInputDevice sender, int channel, int note, int pressure);
         public event PolyphonicAftertouchDelegate PolyphonicAftertouch;
-        public void OnMidiPolyphonicAftertouch(MidiInputDevice sender, int channel, int note, int pressure)
-        {
-            if (PolyphonicAftertouch != null)
-            {
-                PolyphonicAftertouch(sender, channel, note, pressure);
-            }
-        }
 
         /// <summary>
         /// Control Change
@@ -80,13 +52,6 @@
         /// <param name="value">0-127</param>
         public delegate void ControlChangeDelegate(MidiInputDevice sender, int channel, int function, int value);
         public event ControlChangeDelegate ControlChange;
-        public void OnMidiControlChange(MidiInputDevice sender, int channel, int function, int value)
-        {
-            if (ControlChange != null)
-            {
-                ControlChange(sender, channel, function, value);
-            }
-        }
 
         /// <summary>
         /// Program Change
@@ -96,13 +61,6 @@
         /// <param name="program">0-127</param>
         public delegate void ProgramChangeDelegate(MidiInputDevice sender, int channel, int program);
         public event ProgramChangeDelegate ProgramChange;
-        public void OnMidiProgramChange(MidiInputDevice sender, int channel, int program)
-        {
-            if (ProgramChange != null)
-            {
-                ProgramChange(sender, channel, program);
-            }
-        }
 
         /// <summary>
         /// Channel Pressure
@@ -112,13 +70,6 @@
         /// <param name="pressure">0-127</param>
         public delegate void ChannelAftertouchDelegate(MidiInputDevice sender, int channel, int pressure);
         public event ChannelAftertouchDelegate ChannelAftertouch;
-        public void OnMidiChannelAftertouch(MidiInputDevice sender, int channel, int pressure)
-        {
-            if (ChannelAftertouch != null)
-            {
-                ChannelAftertouch(sender, channel, pressure);
-            }
-        }
 
         /// <summary>
         /// PitchBend Change
@@ -128,13 +79,6 @@
         /// <param name="amount">0(low)-8192(center)-16383(high)</param>
         public delegate void PitchWheelDelegate(MidiInputDevice sender, int channel, int amount);
         public event PitchWheelDelegate PitchWheel;
-        public void OnMidiPitchWheel(MidiInputDevice sender, int channel, int amount)
-        {
-            if (PitchWheel != null)
-            {
-                PitchWheel(sender, channel, amount);
-            }
-        }
 
         /// <summary>
         /// MIDI Time Code(MTC) Quarter Frame
@@ -143,13 +87,6 @@
         /// <param name="timing">0-127</param>
         public delegate void TimeCodeQuarterFrameDelegate(MidiInputDevice sender, int timing);
         public event TimeCodeQuarterFrameDelegate TimeCodeQuarterFrame;
-        public void OnMidiTimeCodeQuarterFrame(MidiInputDevice sender, int timing)
-        {
-            if (TimeCodeQuarterFrame != null)
-            {
-                TimeCodeQuarterFrame(sender, timing);
-            }
-        }
 
         /// <summary>
         /// Song Select
@@ -158,13 +95,6 @@
         /// <param name="song">0-127</param>
         public delegate void SongSelectDelegate(MidiInputDevice sender, int song);
         public event SongSelectDelegate SongSelect;
-        public void OnMidiSongSelect(MidiInputDevice sender, int song)
-        {
-            if (SongSelect != null)
-            {
-                SongSelect(sender, song);
-            }
-        }
 
         /// <summary>
         /// Song Position Pointer
@@ -173,13 +103,6 @@
         /// <param name="position">0-16383</param>
         public delegate void SongPositionPointerDelegate(MidiInputDevice sender, int position);
         public event SongPositionPointerDelegate SongPositionPointer;
-        public void OnMidiSongPositionPointer(MidiInputDevice sender, int position)
-        {
-            if (SongPositionPointer != null)
-            {
-                SongPositionPointer(sender, position);
-            }
-        }
 
         /// <summary>
         /// Tune Request
@@ -187,13 +110,6 @@
         /// <param name="sender">the device sent this message</param>
         public delegate void TuneRequestDelegate(MidiInputDevice sender);
         public event TuneRequestDelegate TuneRequest;
-        public void OnMidiTuneRequest(MidiInputDevice sender)
-        {
-            if (TuneRequest != null)
-            {
-                TuneRequest(sender);
-            }
-        }
 
         /// <summary>
         /// Timing Clock
@@ -201,13 +117,6 @@
         /// <param name="sender">the device sent this message</param>
         public delegate void TimingClockDelegate(MidiInputDevice sender);
         public event TimingClockDelegate TimingClock;
-        public void OnMidiTimingClock(MidiInputDevice sender)
-        {
-            if (TimingClock != null)
-            {
-                TimingClock(sender);
-            }
-        }
 
         /// <summary>
         /// Start Playing
@@ -215,27 +124,13 @@
         /// <param name="sender">the device sent this message</param>
         public delegate void StartDelegate(MidiInputDevice sender);
         public event StartDelegate Start;
-        public void OnMidiStart(MidiInputDevice sender)
-        {
-            if (Start != null)
-            {
-                Start(sender);
-            }
-        }
 
         /// <summary>
         /// Continue Playing
         /// </summary>
         /// <param name="sender">the device sent this message</param>
         public delegate void ContinueDelegate(MidiInputDevice sender);
-        public event ContinueDelegate Contiune;
-        public void OnMidiContinue(MidiInputDevice sender)
-        {
-            if (Contiune != null)
-            {
-                Contiune(sender);
-            }
-        }
+        public event ContinueDelegate Continue;
 
         /// <summary>
         /// Stop Playing
@@ -243,13 +138,6 @@
         /// <param name="sender">the device sent this message</param>
         public delegate void StopDelegate(MidiInputDevice sender);
         public event StopDelegate Stop;
-        public void OnMidiStop(MidiInputDevice sender)
-        {
-            if (Stop != null)
-            {
-                Stop(sender);
-            }
-        }
 
         /// <summary>
         /// Active Sensing
@@ -257,13 +145,6 @@
         /// <param name="sender">the device sent this message</param>
         public delegate void ActiveSensingDelegate(MidiInputDevice sender);
         public event ActiveSensingDelegate ActiveSensing;
-        public void OnMidiActiveSensing(MidiInputDevice sender)
-        {
-            if (ActiveSensing != null)
-            {
-                ActiveSensing(sender);
-            }
-        }
 
         /// <summary>
         /// Reset Device
@@ -271,13 +152,6 @@
         /// <param name="sender">the device sent this message</param>
         public delegate void ResetDelegate(MidiInputDevice sender);
         public event ResetDelegate Reset;
-        public void OnMidiReset(MidiInputDevice sender)
-        {
-            if (Reset != null)
-            {
-                Reset(sender);
-            }
-        }
 
         /// <summary>
         /// RPN message<br />
@@ -289,13 +163,6 @@
         /// <param name="value">7 bits or 14 bits</param>
         public delegate void RPNMessageDelegate(MidiInputDevice sender, int channel, int function, int value);
         public event RPNMessageDelegate RPNMessage;
-        public void OnRPNMessage(MidiInputDevice sender, int channel, int function, int value)
-        {
-            if (RPNMessage != null)
-            {
-                RPNMessage(sender, channel, function, value);
-            }
-        }
 
         /// <summary>
         /// NRPN message<br />
@@ -307,19 +174,12 @@
         /// <param name="value">7 bits or 14 bits</param>
         public delegate void NRPNMessageDelegate(MidiInputDevice sender, int channel, int function, int value);
         public event NRPNMessageDelegate NRPNMessage;
-        public void OnNRPNMessage(MidiInputDevice sender, int channel, int function, int value)
-        {
-            if (NRPNMessage != null)
-            {
-                NRPNMessage(sender, channel, function, value);
-            }
-        }
     }
 
     /// <summary>
-    /// Listener for MIDI attached events
+    /// Listener for MIDI attached / detached events
     /// </summary>
-    public sealed class OnMidiDeviceAttachedListener
+    public sealed partial class BleMidilCentralProvider
     {
         /// <summary>
         /// MIDI input device has been attached
@@ -327,13 +187,6 @@
         /// <param name="midiInputDevice"></param>
         public delegate void MidiInputDeviceAttachedDelegate(MidiInputDevice midiInputDevice);
         public event MidiInputDeviceAttachedDelegate MidiInputDeviceAttached;
-        public void OnMidiInputDeviceAttached(MidiInputDevice midiInputDevice)
-        {
-            if (MidiInputDeviceAttached != null)
-            {
-                MidiInputDeviceAttached(midiInputDevice);
-            }
-        }
 
         /// <summary>
         /// MIDI output device has been attached
@@ -341,33 +194,13 @@
         /// <param name="midiOutputDevice"></param>
         public delegate void MidiOutputDeviceAttachedDelegate(MidiOutputDevice midiOutputDevice);
         public event MidiOutputDeviceAttachedDelegate MidiOutputDeviceAttached;
-        public void OnMidiOutputDeviceAttached(MidiOutputDevice midiOutputDevice)
-        {
-            if (MidiOutputDeviceAttached != null)
-            {
-                MidiOutputDeviceAttached(midiOutputDevice);
-            }
-        }
-    }
 
-    /// <summary>
-    /// Listener for MIDI detached events
-    /// </summary>
-    public sealed class OnMidiDeviceDetachedListener
-    {
         /// <summary>
         /// MIDI input device has been detached
         /// </summary>
         /// <param name="midiInputDevice"></param>
         public delegate void MidiInputDeviceDetachedDelegate(MidiInputDevice midiInputDevice);
         public event MidiInputDeviceDetachedDelegate MidiInputDeviceDetached;
-        public void OnMidiInputDeviceDetached(MidiInputDevice midiInputDevice)
-        {
-            if (MidiInputDeviceDetached != null)
-            {
-                MidiInputDeviceDetached(midiInputDevice);
-            }
-        }
 
         /// <summary>
         /// MIDI output device has been detached
@@ -375,12 +208,5 @@
         /// <param name="midiOutputDevice"></param>
         public delegate void MidiOutputDeviceDetachedDelegate(MidiOutputDevice midiOutputDevice);
         public event MidiOutputDeviceDetachedDelegate MidiOutputDeviceDetached;
-        public void OnMidiOutputDeviceDetached(MidiOutputDevice midiOutputDevice)
-        {
-            if (MidiOutputDeviceDetached != null)
-            {
-                MidiOutputDeviceDetached(midiOutputDevice);
-            }
-        }
     }
 }
