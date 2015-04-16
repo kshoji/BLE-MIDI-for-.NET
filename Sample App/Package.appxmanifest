@@ -1,45 +1,34 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://schemas.microsoft.com/appx/2010/manifest" xmlns:m2="http://schemas.microsoft.com/appx/2013/manifest">
-
-  <Identity Name="e212c6c7-7d94-4772-93ec-fca4572c8a45"
-            Publisher="CN=Kaoru"
-            Version="1.0.0.0" />
-
+  <Identity Name="e212c6c7-7d94-4772-93ec-fca4572c8a45" Publisher="CN=Kaoru" Version="1.0.0.0" />
   <Properties>
-    <DisplayName>Sample App</DisplayName>
-    <PublisherDisplayName>Kaoru</PublisherDisplayName>
+    <DisplayName>BLE MIDI Logger</DisplayName>
+    <PublisherDisplayName>Kaoru Shoji</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
-
   <Prerequisites>
     <OSMinVersion>6.3.0</OSMinVersion>
     <OSMaxVersionTested>6.3.0</OSMaxVersionTested>
   </Prerequisites>
-
   <Resources>
-    <Resource Language="x-generate"/>
+    <Resource Language="x-generate" />
   </Resources>
-
   <Applications>
-    <Application Id="App"
-        Executable="$targetnametoken$.exe"
-        EntryPoint="Sample_App.App">
-        <m2:VisualElements
-            DisplayName="Sample App"
-            Square150x150Logo="Assets\Logo.png"
-            Square30x30Logo="Assets\SmallLogo.png"
-            Description="Sample App"
-            ForegroundText="light"
-            BackgroundColor="#464646">
-            <m2:SplashScreen Image="Assets\SplashScreen.png" />
-        </m2:VisualElements>
+    <Application Id="App" Executable="$targetnametoken$.exe" EntryPoint="BLE_MIDI_Logger.App">
+      <m2:VisualElements DisplayName="BLE MIDI Logger" Square150x150Logo="Assets\Logo.png" Square30x30Logo="Assets\SmallLogo.png" Description="BLE MIDI Logger" ForegroundText="light" BackgroundColor="#464646">
+        <m2:SplashScreen Image="Assets\SplashScreen.png" />
+        <m2:InitialRotationPreference>
+          <m2:Rotation Preference="portrait" />
+          <m2:Rotation Preference="landscape" />
+        </m2:InitialRotationPreference>
+      </m2:VisualElements>
     </Application>
   </Applications>
   <Capabilities>
-    <Capability Name="internetClient" />
     <m2:DeviceCapability Name="bluetooth.genericAttributeProfile">
       <m2:Device Id="any">
-        <m2:Function Type="name:genericAccess"/>
+        <m2:Function Type="serviceId:03b80e5a-ede8-4b33-a751-6ce34ec4c700" />
+        <m2:Function Type="name:genericAccess" />
       </m2:Device>
     </m2:DeviceCapability>
   </Capabilities>

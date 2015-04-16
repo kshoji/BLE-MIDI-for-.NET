@@ -5,11 +5,9 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Xml;
 using Windows.ApplicationModel;
-using Windows.Devices.Bluetooth;
 using Windows.Devices.Bluetooth.GenericAttributeProfile;
 using Windows.Devices.Enumeration;
 using Windows.Storage;
-using Windows.Storage.Streams;
 
 namespace kshoji.BleMidi
 {
@@ -22,6 +20,9 @@ namespace kshoji.BleMidi
         private static readonly List<Guid> inputCharacteristicUuids = new List<Guid>();
         private static readonly List<Guid> outputCharacteristicUuids = new List<Guid>();
 
+        /// <summary>
+        /// Initializes the static objects.
+        /// </summary>
         static BleMidiDeviceUtils()
         {
             Initialize();
@@ -37,37 +38,44 @@ namespace kshoji.BleMidi
             string currentElementName = null;
             using (XmlReader reader = XmlReader.Create(new StringReader(text)))
             {
-                while (reader.Read())
+                try
                 {
-                    switch (reader.NodeType)
+                    while (reader.Read())
                     {
-                        case XmlNodeType.Element:
-                            if (reader.Name.Equals("string-array"))
-                            {
-                                currentElementName = reader.GetAttribute("name");
-                            }
-                            break;
+                        switch (reader.NodeType)
+                        {
+                            case XmlNodeType.Element:
+                                if (reader.Name.Equals("string-array"))
+                                {
+                                    currentElementName = reader.GetAttribute("name");
+                                }
+                                break;
 
-                        case XmlNodeType.Text:
-                            switch (currentElementName)
-                            {
-                                case "uuidListForService":
-                                    serviceUuids.Add(BleUuidUtils.FromString(reader.Value));
-                                    break;
-                                case "uuidListForInputCharacteristic":
-                                    inputCharacteristicUuids.Add(BleUuidUtils.FromString(reader.Value));
-                                    break;
-                                case "uuidListForOutputCharacteristic":
-                                    outputCharacteristicUuids.Add(BleUuidUtils.FromString(reader.Value));
-                                    break;
-                                default:
-                                    break;
-                            }
-                            break;
+                            case XmlNodeType.Text:
+                                switch (currentElementName)
+                                {
+                                    case "uuidListForService":
+                                        serviceUuids.Add(BleUuidUtils.FromString(reader.Value));
+                                        break;
+                                    case "uuidListForInputCharacteristic":
+                                        inputCharacteristicUuids.Add(BleUuidUtils.FromString(reader.Value));
+                                        break;
+                                    case "uuidListForOutputCharacteristic":
+                                        outputCharacteristicUuids.Add(BleUuidUtils.FromString(reader.Value));
+                                        break;
+                                    default:
+                                        break;
+                                }
+                                break;
 
-                        default:
-                            break;
+                            default:
+                                break;
+                        }
                     }
+                }
+                catch (System.FormatException e)
+                {
+                    System.Diagnostics.Debug.WriteLine("Exception: " + e.Message);
                 }
             }
         }
@@ -175,6 +183,7 @@ namespace kshoji.BleMidi
         /// <param name="uuidString">the Guid string to parse</param>
         /// <returns>Guid instance</returns>
         /// <exception cref="FormatException">if argument is invalid format</exception>
+        [System.Diagnostics.DebuggerNonUserCode] // This suppresses 'A first chance exception of type ...' messages.
         public static Guid FromString(string uuidString)
         {
             try
@@ -191,8 +200,8 @@ namespace kshoji.BleMidi
         /// <summary>
         /// Check if matches UUID
         /// </summary>
-        /// <param name="src"></param>
-        /// <param name="dst"></param>
+        /// <param name="src">the comparing object(nullable)</param>
+        /// <param name="dst">the comparing object(nullable)</param>
         /// <returns></returns>
         public static bool Matches(Guid src, Guid dst)
         {
@@ -218,8 +227,8 @@ namespace kshoji.BleMidi
         /// <summary>
         /// Obtains short style part of uuid from specified Guid
         /// </summary>
-        /// <param name="src"></param>
-        /// <returns></returns>
+        /// <param name="src">the Guid</param>
+        /// <returns>the UUID in ushort</returns>
         public static ushort GetShortUuid(Guid src)
         {
             ushort result = 0;
@@ -234,8 +243,8 @@ namespace kshoji.BleMidi
         /// <summary>
         /// Checks if the specified Guid is short style
         /// </summary>
-        /// <param name="src"></param>
-        /// <returns></returns>
+        /// <param name="src">the Guid</param>
+        /// <returns>true if the specified Guid is short style</returns>
         public static bool IsShortGuid(Guid src)
         {
             byte[] uuid = src.ToByteArray();

@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using Windows.Devices.Bluetooth.GenericAttributeProfile;
-using Windows.Storage.Streams;
 using Windows.Devices.Enumeration;
+using Windows.Storage.Streams;
 
 namespace kshoji.BleMidi
 {
@@ -54,9 +54,16 @@ namespace kshoji.BleMidi
                     {
                         while (true)
                         {
-                            GattCommunicationStatus status = await characteristic.WriteClientCharacteristicConfigurationDescriptorAsync(GattClientCharacteristicConfigurationDescriptorValue.Notify);
-                            if (status == GattCommunicationStatus.Success)
+                            try {
+                                GattCommunicationStatus status = await characteristic.WriteClientCharacteristicConfigurationDescriptorAsync(GattClientCharacteristicConfigurationDescriptorValue.Notify);
+                                if (status == GattCommunicationStatus.Success)
+                                {
+                                    break;
+                                }
+                            }
+                            catch (Exception e)
                             {
+                                System.Diagnostics.Debug.WriteLine("Exception: " + e.Message);
                                 break;
                             }
                         }
@@ -71,19 +78,23 @@ namespace kshoji.BleMidi
         /// <summary>
         /// Event handler for characteristic value changed
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="args"></param>
-        private void OnCharacteristicValueChanged(GattCharacteristic sender, GattValueChangedEventArgs args)
+        /// <param name="sender">The event sender</param>
+        /// <param name="args">The event arguments</param>
+        protected virtual void OnCharacteristicValueChanged(GattCharacteristic sender, GattValueChangedEventArgs args)
         {
+            // FIXME event receiving order is incorrect.
+            // more details of this issue, see these sites:
+            // http://stackoverflow.com/questions/23848634/event-handler-handling-events-out-of-order
+            // https://social.msdn.microsoft.com/Forums/windowshardware/en-US/1d2ec821-2467-4fc2-8fec-2b26f5cac6e6/gattcharacteristicvaluechanged-event-ordering-with-bluetooth-le-81?forum=wdk
             var data = new byte[args.CharacteristicValue.Length];
             DataReader.FromBuffer(args.CharacteristicValue).ReadBytes(data);
-            parse(data);
+            ParseMidiEvent(data);
         }
 
         /// <summary>
         /// Obtains the device information
         /// </summary>
-        /// <returns></returns>
+        /// <returns>The device information</returns>
         public DeviceInformation GetDeviceInformation()
         {
             return deviceInformation;
@@ -146,7 +157,7 @@ namespace kshoji.BleMidi
         /// <summary>
         /// Obtains the device information
         /// </summary>
-        /// <returns></returns>
+        /// <returns>The device information</returns>
         public DeviceInformation GetDeviceInformation() {
             return deviceInformation;
         }

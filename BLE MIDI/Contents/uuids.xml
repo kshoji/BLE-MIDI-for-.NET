@@ -2,22 +2,18 @@
 <uuids>
   <!-- Advertise and Services UUID for MIDI -->
   <string-array name="uuidListForService">
-    <item>0001</item>
+    <item>03b80e5a-ede8-4b33-a751-6ce34ec4c700</item>
   </string-array>
 
   <!-- Characteristics UUID for MIDI Input -->
   <!-- Notify -->
   <string-array name="uuidListForInputCharacteristic">
-    <item>0002</item>
-    <!-- RedBearLab Biscuit RX -->
-    <item>713d0002-503e-4c75-ba94-3148f18d941e</item>
+    <item>7772e5db-3868-4112-a1a9-f2669d106bf3</item>
   </string-array>
 
   <!-- Characteristics UUID for MIDI Output -->
   <!-- Write without Response -->
   <string-array name="uuidListForOutputCharacteristic">
-    <item>0003</item>
-    <!-- RedBearLab Biscuit TX -->
-    <item>713d0003-503e-4c75-ba94-3148f18d941e</item>
+    <item>7772e5db-3868-4112-a1a9-f2669d106bf3</item>
   </string-array>
 </uuids>

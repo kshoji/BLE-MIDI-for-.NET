@@ -8,7 +8,25 @@
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
-    <Grid>
-
+    <Grid Grid.Column="2">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="350*"/>
+            <ColumnDefinition Width="900*"/>
+            <ColumnDefinition Width="250*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="75*"/>
+            <RowDefinition Height="60*"/>
+            <RowDefinition Height="300*"/>
+            <RowDefinition Height="60*"/>
+            <RowDefinition Height="300*"/>
+        </Grid.RowDefinitions>
+        <TextBlock HorizontalAlignment="Left" Grid.Column="0" Grid.Row="0" Margin="10,22,0,21" TextWrapping="NoWrap" Text="MIDI Device:" VerticalAlignment="Center" FontSize="24" />
+        <ComboBox Name="DevicesComboBox" HorizontalAlignment="Left" VerticalAlignment="Center" Width="858" Grid.Column="1" Margin="10,25,0,15" FontFamily="Global User Interface"/>
+        <ListView Name="MidiInputListView" HorizontalAlignment="Stretch" Height="281" Margin="10,10,10,0" VerticalAlignment="Top" Grid.Row="2" Grid.ColumnSpan="3" />
+        <ListView Name="MidiOutputListView" HorizontalAlignment="Stretch" Height="281" Margin="10,10,10,0" VerticalAlignment="Top" Grid.Row="4" Grid.ColumnSpan="3" />
+        <Button Content="Scan Device" HorizontalAlignment="Right" Margin="0,7,7,0" VerticalAlignment="Center" Click="SyncButtonClicked" Grid.Column="2"/>
+        <TextBlock TextWrapping="Wrap" Text="MIDI Input" Margin="10" Grid.Row="1" FontSize="20" VerticalAlignment="Center"/>
+        <TextBlock TextWrapping="Wrap" Text="MIDI Output" Margin="10" Grid.Row="3" FontSize="20" VerticalAlignment="Center"/>
     </Grid>
 </Page>

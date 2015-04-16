@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace kshoji.BleMidi
@@ -14,11 +15,65 @@ namespace kshoji.BleMidi
         private List<MidiInputDevice> midiInputDevices = new List<MidiInputDevice>();
         private List<MidiOutputDevice> midiOutputDevices = new List<MidiOutputDevice>();
 
+        private CancellationTokenSource scanDeviceCanceller;
+
+        /// <summary>
+        /// Starts Scanning BLE MIDI devices
+        /// </summary>
+        public void StartScanDevices()
+        {
+            if (scanDeviceCanceller != null)
+            {
+                // already started
+                return;
+            }
+
+            scanDeviceCanceller = new CancellationTokenSource();
+
+            // Create task to execute.
+            Action action = async () => {
+                try
+                {
+                    while (true)
+                    {
+                        scanDeviceCanceller.Token.ThrowIfCancellationRequested();
+
+                        await ScanDevices();
+                        await Task.Delay(1000);
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    scanDeviceCanceller.Dispose();
+                    scanDeviceCanceller = null;
+                }
+            };
+
+            Task.Factory.StartNew(action, scanDeviceCanceller.Token, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+        }
+
+        /// <summary>
+        /// Stops Scanning BLE MIDI devices
+        /// </summary>
+        public void StopScanDevices()
+        {
+            if (scanDeviceCanceller == null)
+            {
+                // not started
+                return;
+            }
+
+            if (scanDeviceCanceller.Token.CanBeCanceled)
+            {
+                scanDeviceCanceller.Cancel();
+            }
+        }
+
         /// <summary>
         /// Check for the device connection change
         /// </summary>
-        /// <returns></returns>
-        public async Task ScanDevices()
+        /// <returns>awaitable Task</returns>
+        private async Task ScanDevices()
         {
             // check for attached
             var midiInputDevices = await MidiInputDevice.GetInstances();
@@ -72,7 +127,7 @@ namespace kshoji.BleMidi
         /// <summary>
         /// Obtains list of MidiInputDevice
         /// </summary>
-        /// <returns></returns>
+        /// <returns>The list of MidiInputDevice</returns>
         public IReadOnlyList<MidiInputDevice> GetMidiInputDevices()
         {
             return new ReadOnlyCollection<MidiInputDevice>(midiInputDevices);
@@ -81,7 +136,7 @@ namespace kshoji.BleMidi
         /// <summary>
         /// Obtains list of MidiOutputDevice
         /// </summary>
-        /// <returns></returns>
+        /// <returns>The list of MidiOutputDevice</returns>
         public IReadOnlyList<MidiOutputDevice> GetMidiOutputDevices()
         {
             return new ReadOnlyCollection<MidiOutputDevice>(midiOutputDevices);

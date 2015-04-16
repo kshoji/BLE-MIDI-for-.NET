@@ -19,13 +19,34 @@ namespace Sample_App
             this.InitializeComponent();
 
             bleMidiCentralProvider.MidiInputDeviceAttached += MainPage_MidiInputDeviceAttached;
+            bleMidiCentralProvider.MidiInputDeviceDetached += MainPage_MidiInputDeviceDetached;
             bleMidiCentralProvider.MidiOutputDeviceAttached += MainPage_MidiOutputDeviceAttached;
             bleMidiCentralProvider.MidiOutputDeviceDetached += MainPage_MidiOutputDeviceDetached;
         }
 
-        private async void SyncButtonClicked(object sender, RoutedEventArgs e)
+        private bool isScanning = false;
+
+        private void SyncButtonClicked(object sender, RoutedEventArgs e)
         {
-            await bleMidiCentralProvider.ScanDevices();
+            try
+            {
+                if (!isScanning)
+                {
+                    bleMidiCentralProvider.StartScanDevices();
+                    isScanning = true;
+                    ((Button)sender).Content = "Stop Scan";
+                }
+                else
+                {
+                    bleMidiCentralProvider.StopScanDevices();
+                    isScanning = false;
+                    ((Button)sender).Content = "Scan Device";
+                }
+            }
+            catch (Exception)
+            {
+                // TODO process semaphore timeout exception
+            }
         }
 
         void MainPage_MidiInputDeviceAttached(MidiInputDevice midiInputDevice)
@@ -50,6 +71,30 @@ namespace Sample_App
             midiInputDevice.TimeCodeQuarterFrame += midiInputDevice_TimeCodeQuarterFrame;
             midiInputDevice.TimingClock += midiInputDevice_TimingClock;
             midiInputDevice.TuneRequest += midiInputDevice_TuneRequest;
+        }
+
+        void MainPage_MidiInputDeviceDetached(MidiInputDevice midiInputDevice)
+        {
+            midiInputDevice.ActiveSensing -= midiInputDevice_ActiveSensing;
+            midiInputDevice.ChannelAftertouch -= midiInputDevice_ChannelAftertouch;
+            midiInputDevice.Continue -= midiInputDevice_Continue;
+            midiInputDevice.ControlChange -= midiInputDevice_ControlChange;
+            midiInputDevice.NoteOff -= MainPage_NoteOff;
+            midiInputDevice.NoteOn -= MainPage_NoteOn;
+            midiInputDevice.NRPNMessage -= midiInputDevice_NRPNMessage;
+            midiInputDevice.PitchWheel -= midiInputDevice_PitchWheel;
+            midiInputDevice.PolyphonicAftertouch -= midiInputDevice_PolyphonicAftertouch;
+            midiInputDevice.ProgramChange -= midiInputDevice_ProgramChange;
+            midiInputDevice.Reset -= midiInputDevice_Reset;
+            midiInputDevice.RPNMessage -= midiInputDevice_RPNMessage;
+            midiInputDevice.SongPositionPointer -= midiInputDevice_SongPositionPointer;
+            midiInputDevice.SongSelect -= midiInputDevice_SongSelect;
+            midiInputDevice.Start -= midiInputDevice_Start;
+            midiInputDevice.Stop -= midiInputDevice_Stop;
+            midiInputDevice.SystemExclusive -= midiInputDevice_SystemExclusive;
+            midiInputDevice.TimeCodeQuarterFrame -= midiInputDevice_TimeCodeQuarterFrame;
+            midiInputDevice.TimingClock -= midiInputDevice_TimingClock;
+            midiInputDevice.TuneRequest -= midiInputDevice_TuneRequest;
         }
 
         void midiInputDevice_ActiveSensing(MidiInputDevice sender)
@@ -80,7 +125,7 @@ namespace Sample_App
         {
             Task.Run(() => { }).ContinueWith((task) =>
             {
-                MidiInputListView.Items.Add(String.Format("Control Change from {0}, channel:{1}, function:{2}, valeu:{3}", sender.GetDeviceInformation().Name, channel, function, value));
+                MidiInputListView.Items.Add(String.Format("Control Change from {0}, channel:{1}, function:{2}, value:{3}", sender.GetDeviceInformation().Name, channel, function, value));
             }, uiContext);
         }
 
@@ -88,7 +133,7 @@ namespace Sample_App
         {
             Task.Run(() => { }).ContinueWith((task) =>
             {
-                MidiInputListView.Items.Add(String.Format("NRPN Message from {0}, channel:{1}, function:{2}, valeu:{3}", sender.GetDeviceInformation().Name, channel, function, value));
+                MidiInputListView.Items.Add(String.Format("NRPN Message from {0}, channel:{1}, function:{2}, value:{3}", sender.GetDeviceInformation().Name, channel, function, value));
             }, uiContext);
         }
 
@@ -97,6 +142,10 @@ namespace Sample_App
             Task.Run(() => { }).ContinueWith((task) =>
             {
                 MidiInputListView.Items.Add(String.Format("Note Off from {0}, channel:{1}, note:{2}, velocity:{3}", sender.GetDeviceInformation().Name, channel, note, velocity));
+
+                MidiInputListView.SelectedIndex = MidiInputListView.Items.Count - 1;
+                MidiInputListView.UpdateLayout();
+                MidiInputListView.ScrollIntoView(MidiInputListView.SelectedItem);
             }, uiContext);
         }
 
@@ -104,7 +153,11 @@ namespace Sample_App
         {
             Task.Run(() => { }).ContinueWith((task) =>
             {
-                MidiInputListView.Items.Add(String.Format("Note On from {0}, channel:{2}, note:{2}, velocity:{3}", sender.GetDeviceInformation().Name, channel, note, velocity));
+                MidiInputListView.Items.Add(String.Format("Note On from {0}, channel:{1}, note:{2}, velocity:{3}", sender.GetDeviceInformation().Name, channel, note, velocity));
+
+                MidiInputListView.SelectedIndex = MidiInputListView.Items.Count - 1;
+                MidiInputListView.UpdateLayout();
+                MidiInputListView.ScrollIntoView(MidiInputListView.SelectedItem);
             }, uiContext);
         }
 
@@ -144,7 +197,7 @@ namespace Sample_App
         {
             Task.Run(() => { }).ContinueWith((task) =>
             {
-                MidiInputListView.Items.Add(String.Format("RPN Message from {0}, channel:{1}, function:{2}, valeu:{3}", sender.GetDeviceInformation().Name, channel, function, value));
+                MidiInputListView.Items.Add(String.Format("RPN Message from {0}, channel:{1}, function:{2}, value:{3}", sender.GetDeviceInformation().Name, channel, function, value));
             }, uiContext);
         }
 
