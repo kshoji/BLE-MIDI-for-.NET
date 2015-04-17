@@ -32,20 +32,17 @@ namespace kshoji.BleMidi
 
             // Create task to execute.
             Action action = async () => {
-                try
+                while (true)
                 {
-                    while (true)
+                    if (scanDeviceCanceller.Token.IsCancellationRequested)
                     {
-                        scanDeviceCanceller.Token.ThrowIfCancellationRequested();
-
-                        await ScanDevices();
-                        await Task.Delay(1000);
+                        scanDeviceCanceller.Dispose();
+                        scanDeviceCanceller = null;
+                        break;
                     }
-                }
-                catch (OperationCanceledException)
-                {
-                    scanDeviceCanceller.Dispose();
-                    scanDeviceCanceller = null;
+
+                    await ScanDevices();
+                    await Task.Delay(1000);
                 }
             };
 
